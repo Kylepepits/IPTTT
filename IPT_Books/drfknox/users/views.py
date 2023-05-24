@@ -15,8 +15,29 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from rest_framework.views import APIView
+from django.contrib.auth import authenticate
+from .serializers import UserSerializer
+from rest_framework.views import APIView
 
 
+
+
+
+class LoginView(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            return Response({
+                'user_data': UserSerializer(user).data,
+                'access_token': 'your_access_token_here',
+                'refresh_token': 'your_refresh_token_here',
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({'detail': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def serialize_user(user):
@@ -90,6 +111,15 @@ class BookListView(generics.ListAPIView):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
 
+class UserBookRentalsListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        # Filter out rentals that have been returned
+        rentals = Rental.objects.filter(user__id=user_id, returned=False)
+        books = [rental.book for rental in rentals]
+        serializer = BookSerializer(books, many=True)
+        return Response(serializer.data)
 
 
 
@@ -97,6 +127,10 @@ class BookListView(generics.ListAPIView):
 @authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
 def rent_book(request, book_id):
+    # Check if user already has 3 books rented
+    user_rentals = Rental.objects.filter(user=request.user, returned=False)
+    if user_rentals.count() >= 3:
+        return Response({"error": "User has reached the rental limit."}, status=400)
     try:
         book = Book.objects.get(id=book_id)
     except Book.DoesNotExist:
@@ -107,22 +141,13 @@ def rent_book(request, book_id):
 
     rental_date = timezone.now()
     return_date = rental_date + timezone.timedelta(days=3)
-    rental = Rental(book=book, user=request.user, rental_date=rental_date, return_date=return_date)
+    rental = Rental(book=book, user=request.user, rental_date=rental_date, return_date=return_date, returned=False)
     rental.save()
 
     book.available = False
     book.save()
 
     return Response({"success": f"Book {book.title} rented successfully."}, status=200)
-
-class UserBookRentalsListView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, user_id):
-        rentals = Rental.objects.filter(user__id=user_id)
-        books = [rental.book for rental in rentals]
-        serializer = BookSerializer(books, many=True)
-        return Response(serializer.data)
 
 
 @api_view(['PUT'])
@@ -143,6 +168,5 @@ def return_book(request, book_id):
     book.save()
 
     return Response({"success": f"Book {book.title} returned successfully."}, status=200)
-
 
     

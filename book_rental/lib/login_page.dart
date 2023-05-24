@@ -30,11 +30,17 @@ class _LoginScreenState extends State<LoginScreen> {
         await Provider.of<AuthProvider>(context, listen: false)
             .login(username, password);
 
-        Navigator.pushNamed(context, '/Home');
+        if (username == 'admin') {
+          Navigator.pushNamed(context, '/Admin');
+        } else {
+          Navigator.pushNamed(context, '/Home');
+        }
       } catch (error) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed to login. Please try again.'),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to login. Please try again.'),
+          ),
+        );
       }
     }
   }

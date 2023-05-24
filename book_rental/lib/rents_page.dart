@@ -44,7 +44,7 @@ class _UserRentedBooksScreenState extends State<UserRentedBooksScreen> {
     }
   }
 
-  Future<void> _returnBook(int bookId) async {
+  Future<int> _returnBook(int bookId) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final accessToken = authProvider.accessToken;
     final url = 'http://127.0.0.1:8000/api/books/$bookId/return/';
@@ -66,12 +66,15 @@ class _UserRentedBooksScreenState extends State<UserRentedBooksScreen> {
         // Remove the book from the list
         books.removeWhere((book) => book['id'] == bookId);
       });
+      return bookId; // Return the book ID
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to return book'),
         ),
       );
+      throw Exception(
+          'Failed to return book'); // Throw an exception in case of failure
     }
   }
 
@@ -105,11 +108,8 @@ class _UserRentedBooksScreenState extends State<UserRentedBooksScreen> {
                       ),
                       trailing: ElevatedButton(
                         onPressed: () async {
-                          await _returnBook(book['id']);
-                          setState(() {
-                            books.removeAt(
-                                index); // Remove the book from the list
-                          });
+                          final returnedBookId = await _returnBook(book['id']);
+                          Navigator.pop(context, returnedBookId);
                         },
                         child: Text('Return'),
                       ),

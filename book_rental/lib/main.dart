@@ -5,6 +5,7 @@ import 'package:book_rental/rents_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'admin_page.dart';
 import 'screens/signup_page.dart';
 
 void main() {
@@ -28,8 +29,9 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginScreen(),
         '/Home': (context) => HomeScreen(),
         '/Rents': (context) => UserRentedBooksScreen(
-              userId: 1,
+              userId: 24,
             ),
+        '/Admin': (context) => AdminHomeScreen(),
       },
     );
   }

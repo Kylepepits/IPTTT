@@ -40,7 +40,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class BookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Book
-        fields = ('id', 'title', 'author', 'description', 'price', 'available', 'created_at', 'updated_at','image')
+        fields = ('id', 'title', 'author', 'description', 'price', 'available', 'created_at', 'updated_at')
 
 
 class UserSerializer(serializers.ModelSerializer):
